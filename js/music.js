@@ -22,48 +22,44 @@ const TRACK_IDS = [
     78598850  // Billie Eilish - bad guy
 ];
 
-// **Yeni Proxy URL-lər**
 const proxyUrls = [
     "https://api.codetabs.com/v1/proxy?quest="
 ];
 
 async function fetchDeezerTracks() {
-    for (const TRACK_ID of TRACK_IDS) {
-        for (const proxyUrl of proxyUrls) {
-            try {
-                const response = await fetch(proxyUrl + encodeURIComponent(`https://api.deezer.com/track/${TRACK_ID}`));
-                const result = await response.json();
-                
-                let data;
-                if (result.contents) {
-                    data = JSON.parse(result.contents);
-                } else {
-                    data = result;
-                }
+    const TRACK_IDS = [3135556, 1109731, 647056, 78598850];
 
-                if (data.preview) {
-                    tracks.push({
-                        path: data.preview,
-                        displayName: data.title,
-                        cover: data.album.cover_big,
-                        artist: data.artist.name,
-                    });
-                    break; // Düzgün cavab alındıqda döngünü dayandırırıq
-                }
-            } catch (error) {
-                console.error("Xəta baş verdi:", error);
+    for (const TRACK_ID of TRACK_IDS) {
+        try {
+            const response = await fetch(`/api/deezer/track/${TRACK_ID}`);
+            if (!response.ok) {
+                throw new Error(`API xətası: ${response.status}`);
             }
+            const data = await response.json();
+
+            if (data.preview) {
+                tracks.push({
+                    path: data.preview,
+                    displayName: data.title,
+                    cover: data.album.cover_big,
+                    artist: data.artist.name,
+                });
+            } else {
+                console.warn(`Track ${TRACK_ID} üçün preview_url tapılmadı.`);
+            }
+        } catch (error) {
+            console.error("Xəta baş verdi:", error);
         }
     }
 
     if (tracks.length === 0) {
         alert("Musiqilər açılmır, çünki `preview_url` mövcud deyil!");
     } else {
-        loadMusic(tracks[musicIndex]); // ✅ İlk musiqini yüklə
+        loadMusic(tracks[musicIndex]);
     }
 }
 
-// **Musiqi Player Funksiyaları**
+
 function togglePlay() {
     if (isPlaying) {
         pauseMusic();
