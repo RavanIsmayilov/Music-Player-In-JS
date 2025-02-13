@@ -1,6 +1,5 @@
 {
   "routes": [
-    { "src": "/api/deezer/track/(.*)", "dest": "https://api.deezer.com/track/$1" },
     { "src": "/(.*)", "dest": "/music.html" }
   ]
 }
