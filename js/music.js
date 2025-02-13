@@ -1,7 +1,3 @@
-const CLIENT_ID = '3116896738464e01b0e5caa3353d2956';
-const CLIENT_SECRET = 'db607ef021a348edb1b06d6e98a141b8';
-const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
-
 const image = document.getElementById('cover'),
     title = document.getElementById('music-title'),
     artist = document.getElementById('music-artist'),
@@ -19,49 +15,55 @@ let musicIndex = 0;
 let isPlaying = false;
 let tracks = [];
 
-// Get access token from Spotify
-async function getAccessToken() {
-    const response = await fetch(TOKEN_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET)
-        },
-        body: 'grant_type=client_credentials'
-    });
+const TRACK_IDS = [
+    3135556,  // Madonna - Hung Up
+    1109731,  // Daft Punk - One More Time
+    647056,   // Red Hot Chili Peppers - Californication
+    78598850  // Billie Eilish - bad guy
+];
 
-    const data = await response.json();
-    return data.access_token;
-}
+// **Yeni Proxy URL-lər**
+const proxyUrls = [
+    "https://api.codetabs.com/v1/proxy?quest="
+];
 
+async function fetchDeezerTracks() {
+    for (const TRACK_ID of TRACK_IDS) {
+        for (const proxyUrl of proxyUrls) {
+            try {
+                const response = await fetch(proxyUrl + encodeURIComponent(`https://api.deezer.com/track/${TRACK_ID}`));
+                const result = await response.json();
+                
+                let data;
+                if (result.contents) {
+                    data = JSON.parse(result.contents);
+                } else {
+                    data = result;
+                }
 
-
-// Fetch tracks from Spotify API
-async function fetchTracks() {
-    const token = await getAccessToken();
-    const response = await fetch('https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/tracks', { // Replace with your playlist ID
-        headers: {
-            'Authorization': `Bearer ${token}`
+                if (data.preview) {
+                    tracks.push({
+                        path: data.preview,
+                        displayName: data.title,
+                        cover: data.album.cover_big,
+                        artist: data.artist.name,
+                    });
+                    break; // Düzgün cavab alındıqda döngünü dayandırırıq
+                }
+            } catch (error) {
+                console.error("Xəta baş verdi:", error);
+            }
         }
-    });
-    
-    const data = await response.json();
-    console.log(data);
-    
+    }
 
-    // Map the Spotify data to your track format
-    tracks = data.items.map(item => ({
-        path: item.track.preview_url, // URL for a 30-second preview
-        displayName: item.track.name,
-        cover: item.track.album.images[0].url,
-        artist: item.track.artists[0].name,
-    }));
-
-    // Load the first track
-    loadMusic(tracks[musicIndex]);
+    if (tracks.length === 0) {
+        alert("Musiqilər açılmır, çünki `preview_url` mövcud deyil!");
+    } else {
+        loadMusic(tracks[musicIndex]); // ✅ İlk musiqini yüklə
+    }
 }
 
-// Play or pause music
+// **Musiqi Player Funksiyaları**
 function togglePlay() {
     if (isPlaying) {
         pauseMusic();
@@ -74,7 +76,7 @@ function playMusic() {
     isPlaying = true;
     playBtn.classList.replace('fa-play', 'fa-pause');
     playBtn.setAttribute('title', 'Pause');
-    music.loop = true; 
+    music.loop = true;
     music.play();
 }
 
@@ -85,7 +87,6 @@ function pauseMusic() {
     music.pause();
 }
 
-// Load the track
 function loadMusic(track) {
     music.src = track.path;
     title.textContent = track.displayName;
@@ -126,5 +127,4 @@ music.addEventListener('ended', () => changeMusic(1));
 music.addEventListener('timeupdate', updateProgressBar);
 playerProgress.addEventListener('click', setProgressBar);
 
-// Fetch the tracks from the Spotify API
-fetchTracks();
+fetchDeezerTracks();
