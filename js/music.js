@@ -15,12 +15,6 @@ let musicIndex = 0;
 let isPlaying = false;
 let tracks = [];
 
-const TRACK_IDS = [
-    3135556,  // Madonna - Hung Up
-    1109731,  // Daft Punk - One More Time
-    647056,   // Red Hot Chili Peppers - Californication
-    78598850  // Billie Eilish - bad guy
-];
 
 const proxyUrls = [
     "https://api.codetabs.com/v1/proxy?quest="
@@ -58,6 +52,7 @@ async function fetchDeezerTracks() {
         loadMusic(tracks[musicIndex]);
     }
 }
+
 
 
 function togglePlay() {
