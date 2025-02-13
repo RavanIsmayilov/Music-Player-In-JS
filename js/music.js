@@ -1,3 +1,7 @@
+const CLIENT_ID = '3116896738464e01b0e5caa3353d2956';
+const CLIENT_SECRET = 'db607ef021a348edb1b06d6e98a141b8';
+const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token';
+
 const image = document.getElementById('cover'),
     title = document.getElementById('music-title'),
     artist = document.getElementById('music-artist'),
@@ -15,45 +19,43 @@ let musicIndex = 0;
 let isPlaying = false;
 let tracks = [];
 
+async function getAccessToken() {
+    const response = await fetch(TOKEN_ENDPOINT, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET)
+        },
+        body: 'grant_type=client_credentials'
+    });
 
-const proxyUrls = [
-    "https://api.codetabs.com/v1/proxy?quest="
-];
-
-async function fetchDeezerTracks() {
-    const TRACK_IDS = [3135556, 1109731, 647056, 78598850];
-
-    for (const TRACK_ID of TRACK_IDS) {
-        try {
-            const response = await fetch(`/api/deezer/track/${TRACK_ID}`);
-            if (!response.ok) {
-                throw new Error(`API xətası: ${response.status}`);
-            }
-            const data = await response.json();
-
-            if (data.preview) {
-                tracks.push({
-                    path: data.preview,
-                    displayName: data.title,
-                    cover: data.album.cover_big,
-                    artist: data.artist.name,
-                });
-            } else {
-                console.warn(`Track ${TRACK_ID} üçün preview_url tapılmadı.`);
-            }
-        } catch (error) {
-            console.error("Xəta baş verdi:", error);
-        }
-    }
-
-    if (tracks.length === 0) {
-        alert("Musiqilər açılmır, çünki `preview_url` mövcud deyil!");
-    } else {
-        loadMusic(tracks[musicIndex]);
-    }
+    const data = await response.json();
+    return data.access_token;
 }
 
 
+
+async function fetchTracks() {
+    const token = await getAccessToken();
+    const response = await fetch('https://api.spotify.com/v1/playlists/3cEYpjA9oz9GiPac4AsH4n/tracks', { // Replace with your playlist ID
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    
+    const data = await response.json();
+    console.log(data);
+    
+
+    tracks = data.items.map(item => ({
+        path: item.track.preview_url, 
+        displayName: item.track.name,
+        cover: item.track.album.images[0].url,
+        artist: item.track.artists[0].name,
+    }));
+
+    loadMusic(tracks[musicIndex]);
+}
 
 function togglePlay() {
     if (isPlaying) {
@@ -67,7 +69,7 @@ function playMusic() {
     isPlaying = true;
     playBtn.classList.replace('fa-play', 'fa-pause');
     playBtn.setAttribute('title', 'Pause');
-    music.loop = true;
+    music.loop = true; 
     music.play();
 }
 
@@ -118,4 +120,4 @@ music.addEventListener('ended', () => changeMusic(1));
 music.addEventListener('timeupdate', updateProgressBar);
 playerProgress.addEventListener('click', setProgressBar);
 
-fetchDeezerTracks();
+fetchTracks();
